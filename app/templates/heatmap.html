@@ -1,15 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Heatmap BTCUSDT</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Heatmap de Bids e Asks - BTCUSDT</title>
 </head>
 <body>
     <h2 style="text-align:center;">Heatmap de Bids e Asks - BTCUSDT</h2>
-    <div id="heatmap" style="width:90%;height:600px;margin:auto;"></div>
-    <script>
-        const plotData = {{ heatmap_data | safe }};
-        Plotly.newPlot("heatmap", plotData.data, plotData.layout);
-    </script>
+    {{ heatmap_data | safe }}
 </body>
 </html>
