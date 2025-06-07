@@ -11,6 +11,23 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def definir_bucket_size(preco: float) -> float:
+    """
+    Define o bucket_size ideal com base no preço médio do ativo.
+    """
+    if preco >= 10_000:
+        return 200
+    elif preco >= 1_000:
+        return 10
+    elif preco >= 100:
+        return 2
+    elif preco >= 10:
+        return 0.5
+    elif preco >= 1:
+        return 0.05
+    else:
+        return 0.001
+
 def _load_and_prepare_data(file_path: Path):
     """Carrega e prepara um único arquivo CSV"""
     try:
@@ -26,14 +43,15 @@ def _load_and_prepare_data(file_path: Path):
         df["price"] = pd.to_numeric(df["price"])
         df["volume"] = pd.to_numeric(df["volume"])
 
-        # Agrupamento por faixa de preço de 100 unidades
-        bucket_size = 100
+        avg_price = df["price"].mean()
+        bucket_size = definir_bucket_size(avg_price)
+
+        # Agrupamento por faixa de preço
         df["price_bucket"] = (df["price"] // bucket_size) * bucket_size
 
         # Agrupamento por tempo de 5 minutos
         df["time_bucket"] = df["timestamp"].dt.floor("5min")
 
-        avg_price = df["price"].mean()
         return df, None, avg_price
 
     except Exception as e:
@@ -56,7 +74,7 @@ def _create_heatmap(df: pd.DataFrame, title: str, avg_price: float):
         fig = go.Figure(go.Heatmap(
             z=z_data,
             x=pivot.columns.strftime("%d, %H:%M"),
-            y=[f"{p:.0f}" for p in pivot.index],
+            y=[f"{p:.4f}" if p < 1 else f"{p:.0f}" for p in pivot.index],
             colorscale='Viridis',
             zmin=0,
             zmax=1,
