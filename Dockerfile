@@ -1,22 +1,29 @@
+# Imagem base com Python 3.11
 FROM python:3.11-slim
 
-# Instala dependências básicas do sistema
+# Instala dependências do sistema necessárias para git e curl
 RUN apt-get update && apt-get install -y git curl && apt-get clean
 
-# Cria e entra no diretório de trabalho
+# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Clona o repositório
+# Clona o repositório do projeto diretamente do GitHub
 RUN git clone https://github.com/madrijkaard/rkd-htf-learning.git .
 
-# Instala dependências do Python
+# Garante que a pasta 'static/' exista (necessária para o FastAPI mount)
+RUN mkdir -p static
+
+# Copia o arquivo .env do host para o container (deve estar no mesmo diretório do Dockerfile)
+COPY .env .env
+
+# Instala as dependências Python do projeto
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expõe a porta do FastAPI
+# Expõe a porta usada pela aplicação FastAPI
 EXPOSE 8000
 
-# Comando para iniciar uvicorn, esperar 10s e fazer POST
+# Comando para iniciar o app, aguardar e iniciar captura automática
 CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 & \
-           sleep 10 && \
+           sleep 20 && \
            curl -X POST http://localhost:8000/order-book/capture/start && \
            tail -f /dev/null"
