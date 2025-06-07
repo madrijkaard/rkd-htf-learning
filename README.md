@@ -1,3 +1,4 @@
+
 # rkd-htf-learning
 
 Projeto responsável por capturar, armazenar e visualizar métricas de livro de ofertas (order book) a partir da Binance para uso no núcleo de aprendizado do sistema `rkd-htf-core`.
@@ -76,6 +77,43 @@ uvicorn app.main:app --reload
 ```
 
 Acesse em: [http://localhost:8000](http://localhost:8000)
+
+---
+
+## 🐳 Executando com Docker
+
+Se preferir rodar o sistema em container, siga os passos abaixo:
+
+### 1. Construa a imagem Docker
+
+```bash
+docker build -t rkd-htf-learning .
+```
+
+### 2. Execute em background
+
+```bash
+docker run -d -p 8000:8000 --name rkd-container rkd-htf-learning
+```
+
+Após aproximadamente 10 segundos, o sistema faz automaticamente um POST para iniciar a captura do livro de ofertas:
+
+```
+POST http://localhost:8000/order-book/capture/start
+```
+
+### 3. Acesse a aplicação
+
+Abra no navegador:
+
+[http://localhost:8000/docs](http://localhost:8000/docs)
+
+### 🛑 Parar e remover o container
+
+```bash
+docker stop rkd-container
+docker rm rkd-container
+```
 
 ---
 
