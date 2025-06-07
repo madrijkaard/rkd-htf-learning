@@ -96,7 +96,7 @@ docker build -t rkd-htf-learning .
 docker run -d -p 8000:8000 --name rkd-container rkd-htf-learning
 ```
 
-Após aproximadamente 10 segundos, o sistema faz automaticamente um POST para iniciar a captura do livro de ofertas:
+Após aproximadamente 20 segundos, o sistema faz automaticamente um POST para iniciar a captura do livro de ofertas:
 
 ```
 POST http://localhost:8000/order-book/capture/start
