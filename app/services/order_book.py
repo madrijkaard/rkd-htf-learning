@@ -21,7 +21,7 @@ def capture_order_book(symbol: str):
     data legível e o preço de mercado no momento.
     """
     base_url = "https://api.binance.com/api/v3/depth"
-    params = {"symbol": symbol.upper(), "limit": 100}
+    params = {"symbol": symbol.upper(), "limit": 800}
     response = requests.get(base_url, params=params, timeout=10)
     response.raise_for_status()
     data = response.json()
