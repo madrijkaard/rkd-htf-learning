@@ -16,7 +16,7 @@ def definir_bucket_size(preco_min: float, preco_max: float) -> float:
     bucket = faixa / 30 if faixa > 0 else 0.001
     return round(bucket, 6)
 
-def _load_and_prepare_data(file_path: Path):
+def _load_and_prepare_data(file_path: Path, bucket_price: float = None, bucket_time: str = "5min"):
     try:
         if not file_path.exists():
             return None, f"Arquivo não encontrado: {file_path}", None
@@ -25,17 +25,23 @@ def _load_and_prepare_data(file_path: Path):
         if not {"timestamp", "price", "volume"}.issubset(df.columns):
             return None, "Arquivo CSV inválido", None
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"], unit='s')
+        # Converte timestamp para horário local
+        df["timestamp"] = (
+            pd.to_datetime(df["timestamp"], unit='s')
+            .dt.tz_localize("UTC")
+            .dt.tz_convert("America/Sao_Paulo")
+        )
+
         df["price"] = pd.to_numeric(df["price"])
         df["volume"] = pd.to_numeric(df["volume"])
 
         preco_min = df["price"].min()
         preco_max = df["price"].max()
-        bucket_size = definir_bucket_size(preco_min, preco_max)
+        bucket_size = bucket_price if bucket_price else definir_bucket_size(preco_min, preco_max)
         avg_price = df["price"].mean()
 
         df["price_bucket"] = (df["price"] // bucket_size) * bucket_size
-        df["time_bucket"] = df["timestamp"].dt.floor("5min")
+        df["time_bucket"] = df["timestamp"].dt.floor(bucket_time)
 
         return df, None, avg_price
 
@@ -49,7 +55,7 @@ def _create_heatmap(df: pd.DataFrame, title: str, avg_price: float):
             return "<p style='color:red;'>Dados vazios</p>"
 
         pivot = df.groupby(["price_bucket", "time_bucket"])["volume"].sum().unstack(fill_value=0)
-        pivot = pivot.sort_index(ascending=False)
+        pivot = pivot.sort_index(ascending=True)
 
         z_data = pivot.values
         z_data = (z_data - np.min(z_data)) / (np.max(z_data) - np.min(z_data) + 0.001)
@@ -66,11 +72,11 @@ def _create_heatmap(df: pd.DataFrame, title: str, avg_price: float):
         ))
 
         fig.update_layout(
-            xaxis_title="Tempo",
+            xaxis_title="Tempo (Horário Local)",
             yaxis_title="Faixa de Preço",
             height=400,
             margin=dict(t=20, b=40, l=50, r=50),
-            title=None  # Removido!
+            title=None
         )
 
         return pio.to_html(fig, full_html=False)
@@ -78,12 +84,12 @@ def _create_heatmap(df: pd.DataFrame, title: str, avg_price: float):
     except Exception as e:
         return f"<p style='color:red;'>Erro ao gerar heatmap: {str(e)}</p>"
 
-def generate_heatmap_data(symbol: str):
+def generate_heatmap_data(symbol: str, bucket_price: float = None, bucket_time: str = "5min"):
     bids_path = Path(f"data/bids/{symbol}.csv")
     asks_path = Path(f"data/asks/{symbol}.csv")
 
-    bids_df, bids_err, bids_avg = _load_and_prepare_data(bids_path)
-    asks_df, asks_err, asks_avg = _load_and_prepare_data(asks_path)
+    bids_df, bids_err, bids_avg = _load_and_prepare_data(bids_path, bucket_price, bucket_time)
+    asks_df, asks_err, asks_avg = _load_and_prepare_data(asks_path, bucket_price, bucket_time)
 
     bids_html = _create_heatmap(bids_df, "Bids", bids_avg) if bids_df is not None else bids_err
     asks_html = _create_heatmap(asks_df, "Asks", asks_avg) if asks_df is not None else asks_err

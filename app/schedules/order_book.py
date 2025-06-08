@@ -20,22 +20,26 @@ async def _run_schedule(symbol: str):
             print(f"[{timestamp}] [schedule] Erro ao capturar {symbol}: {e}")
         await asyncio.sleep(settings.capture_interval_seconds)
 
-async def start_schedule():
+async def start_schedule() -> bool:
     """
     Inicia os agendadores para todos os símbolos configurados.
+    Retorna True se iniciou, False se já estava rodando.
     """
     global running, tasks
-    if not running:
-        running = True
-        print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [schedule] Iniciando agendadores...")
-        for symbol in settings.symbols:
-            try:
-                reset_order_book_files(symbol)
-                task = asyncio.create_task(_run_schedule(symbol))
-                tasks[symbol] = task
-                print(f"  ✔ Agendador para {symbol} iniciado.")
-            except Exception as e:
-                print(f"  ✖ Erro ao iniciar agendador para {symbol}: {e}")
+    if running:
+        return False  # Já está em execução
+
+    running = True
+    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [schedule] Iniciando agendadores...")
+    for symbol in settings.symbols:
+        try:
+            reset_order_book_files(symbol)
+            task = asyncio.create_task(_run_schedule(symbol))
+            tasks[symbol] = task
+            print(f"  ✔ Agendador para {symbol} iniciado.")
+        except Exception as e:
+            print(f"  ✖ Erro ao iniciar agendador para {symbol}: {e}")
+    return True
 
 async def stop_schedule():
     """
@@ -48,3 +52,9 @@ async def stop_schedule():
         task.cancel()
         print(f"  ✖ Agendador para {symbol} cancelado.")
     tasks.clear()
+
+def is_running() -> bool:
+    """
+    Retorna True se os agendadores estão em execução.
+    """
+    return running
