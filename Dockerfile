@@ -1,28 +1,35 @@
 # Imagem base com Python 3.11
 FROM python:3.11-slim
 
-# Instala dependências do sistema necessárias para git e curl
-RUN apt-get update && apt-get install -y git curl && apt-get clean
+# Argumento para forçar invalidação de cache
+ARG CACHE_BUSTER=initial
 
-# Define o diretório de trabalho dentro do container
+# Instala git, curl e nano (útil para edição dentro do container)
+RUN apt-get update && apt-get install -y git curl nano && apt-get clean
+
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Clona o repositório do projeto diretamente do GitHub
-RUN git clone https://github.com/madrijkaard/rkd-htf-learning.git .
+# Clona o repositório e força atualização com git pull
+RUN echo "Forçando cache buster: $CACHE_BUSTER" && \
+    git clone https://github.com/madrijkaard/rkd-htf-learning.git . && \
+    git pull
 
-# Garante que a pasta 'static/' exista (necessária para o FastAPI mount)
-RUN mkdir -p static
+# Cria o arquivo .env diretamente no container
+RUN echo "APP_NAME=rkd-htf-learning\nCAPTURE_INTERVAL_SECONDS=60\nSYMBOLS=[\"BTCUSDT\"]" > .env
 
-# Copia o arquivo .env do host para o container (deve estar no mesmo diretório do Dockerfile)
-COPY .env .env
+# Cria a estrutura de diretórios necessários
+RUN mkdir -p static && \
+    mkdir -p data/asks && \
+    mkdir -p data/bids
 
-# Instala as dependências Python do projeto
+# Instala as dependências Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expõe a porta usada pela aplicação FastAPI
+# Expõe a porta usada pelo FastAPI
 EXPOSE 8000
 
-# Comando para iniciar o app, aguardar e iniciar captura automática
+# Comando de inicialização do servidor + chamada ao endpoint
 CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 & \
            sleep 20 && \
            curl -X POST http://localhost:8000/order-books/capture/start && \
