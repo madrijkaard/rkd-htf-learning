@@ -25,5 +25,5 @@ EXPOSE 8000
 # Comando para iniciar o app, aguardar e iniciar captura automática
 CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 & \
            sleep 20 && \
-           curl -X POST http://localhost:8000/order-book/capture/start && \
+           curl -X POST http://localhost:8000/order-books/capture/start && \
            tail -f /dev/null"
