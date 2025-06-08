@@ -80,7 +80,7 @@ def _create_combined_heatmap(bids_df: pd.DataFrame, asks_df: pd.DataFrame, avg_p
         # Eixos
         pivot = pivot.reset_index()
         time_labels = pivot["time_bucket"].dt.strftime("%d, %H:%M").unique()
-        price_labels = [f"{p:.4f}" for p in sorted(price_buckets)]
+        price_labels = [f"{p:.2f}" for p in sorted(price_buckets)]  # <––– DUAS casas decimais
 
         # Calcular linha de preço médio de mercado por time_bucket
         market_prices = pd.concat([bids_df, asks_df])
@@ -91,7 +91,7 @@ def _create_combined_heatmap(bids_df: pd.DataFrame, asks_df: pd.DataFrame, avg_p
         line_y = []
         for price in market_line:
             closest_bucket = price_buckets[np.abs(price_buckets - price).argmin()]
-            line_y.append(f"{closest_bucket:.4f}")
+            line_y.append(f"{closest_bucket:.2f}")  # <––– DUAS casas decimais
 
         fig = go.Figure()
 
@@ -117,8 +117,8 @@ def _create_combined_heatmap(bids_df: pd.DataFrame, asks_df: pd.DataFrame, avg_p
             y=line_y,
             mode="lines+markers",
             name="Preço de Mercado",
-            line=dict(color="white", width=2),           # linha contínua branca
-            marker=dict(size=4, color="white")           # marcadores brancos
+            line=dict(color="white", width=2),
+            marker=dict(size=4, color="white")
         ))
 
         fig.update_layout(
