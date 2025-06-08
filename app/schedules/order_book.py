@@ -27,7 +27,7 @@ async def start_schedule() -> bool:
     """
     global running, tasks
     if running:
-        return False  # Já está em execução
+        return False
 
     running = True
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] [schedule] Iniciando agendadores...")

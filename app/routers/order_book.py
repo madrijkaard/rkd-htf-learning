@@ -6,7 +6,6 @@ from app.services.heatmap import generate_heatmap_data
 
 router = APIRouter()
 
-# Inicializa os templates
 templates = Jinja2Templates(directory="app/templates")
 
 @router.post("/capture/start", status_code=status.HTTP_202_ACCEPTED)
