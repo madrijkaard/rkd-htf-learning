@@ -1,7 +1,16 @@
-
 # rkd-htf-learning
 
-Projeto responsável por capturar, armazenar e visualizar métricas de livro de ofertas (order book) a partir da Binance para uso no núcleo de aprendizado do sistema `rkd-htf-core`.
+Projeto responsável por capturar, armazenar e visualizar métricas de livro de ofertas (order book) da Binance para uso no núcleo de aprendizado do sistema [`rkd-htf-core`](https://github.com/madrijkaard/rkd-htf-core).  
+O sistema expõe APIs FastAPI para captura automatizada, análise e visualização dos dados.
+
+---
+
+## 📐 Visão geral da arquitetura
+
+- **FastAPI**: expõe endpoints REST e serve páginas interativas (docs/heatmap).
+- **Coleta de dados**: agendamento da captura do livro de ofertas (order book) de símbolos configuráveis da Binance.
+- **Armazenamento**: dados salvos em arquivos CSV para posterior análise/modelagem.
+- **Visualização**: geração de heatmaps interativos via Plotly.js para análise visual dos dados de bids/asks.
 
 ---
 
@@ -26,16 +35,17 @@ rkd-htf-learning/
 │   │   ├── learning.py
 │   │   └── order_book.py
 │   ├── schemas/                 # modelos de dados (Pydantic)
-│   ├── services/                # lógica de negócio (coleta, CSV, etc.)
+│   ├── services/                # lógica de negócio (coleta, heatmap)
 │   ├── schedules/               # agendadores (ex: order_book a cada 60s)
 │   ├── templates/               # HTML Jinja2 para visualização Plotly.js
-│   └── config/                  # settings com leitura do .env
+│   └── config/                  # settings e leitura do .env
 ├── data/
 │   ├── bids/                    # arquivos CSV de ordens de compra
 │   └── asks/                    # arquivos CSV de ordens de venda
-├── static/                      # recursos estáticos para frontend (se necessário)
+├── static/                      # recursos estáticos para frontend
 ├── .env                         # variáveis de ambiente
 ├── requirements.txt             # dependências Python
+├── Dockerfile                   # imagem Docker para deploy
 └── README.md                    # este arquivo
 ```
 
@@ -46,15 +56,21 @@ rkd-htf-learning/
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/rkd-htf-learning.git
+git clone https://github.com/madrijkaard/rkd-htf-learning.git
 cd rkd-htf-learning
 ```
 
 ### 2. Crie e ative um ambiente virtual
 
+**Linux/macOS**
 ```bash
 python3 -m venv venv
 source venv/bin/activate
+```
+**Windows**
+```powershell
+python -m venv venv
+venv\Scripts\activate
 ```
 
 ### 3. Instale as dependências
@@ -65,10 +81,12 @@ pip install -r requirements.txt
 
 ### 4. Configure seu `.env`
 
+Crie um arquivo `.env` na raiz:
 ```env
 APP_NAME=rkd-htf-learning
 SYMBOL=BTCUSDT
 ```
+- `SYMBOL`: define o par de criptoativo para captura do order book (ex: BTCUSDT).
 
 ### 5. Execute o servidor
 
@@ -82,8 +100,6 @@ Acesse em: [http://localhost:8000](http://localhost:8000)
 
 ## 🐳 Executando com Docker
 
-Se preferir rodar o sistema em container, siga os passos abaixo:
-
 ### 1. Construa a imagem Docker
 
 ```bash
@@ -96,17 +112,14 @@ docker build -t rkd-htf-learning .
 docker run -d -p 8000:8000 --name rkd-container rkd-htf-learning
 ```
 
-Após aproximadamente 20 segundos, o sistema faz automaticamente um POST para iniciar a captura do livro de ofertas:
-
+O sistema automaticamente faz um POST para iniciar a captura após 20 segundos:
 ```
-POST http://localhost:8000/order-book/capture/start
+POST http://localhost:8000/order-books/capture/start
 ```
 
 ### 3. Acesse a aplicação
 
-Abra no navegador:
-
-[http://localhost:8000/docs](http://localhost:8000/docs)
+- Documentação OpenAPI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ### 🛑 Parar e remover o container
 
@@ -117,27 +130,37 @@ docker rm rkd-container
 
 ---
 
-## 📊 Endpoints disponíveis
+## 📊 Endpoints principais
 
-### 🔹 `/order-book/capture`  
-Captura o order book da Binance para o símbolo definido no `.env` e salva os arquivos `bids/XXX.csv` e `asks/XXX.csv`.
+> Os endpoints usam o prefixo plural, conforme as rotas do FastAPI.
 
-### 🔹 `/order-book/capture/start`  
-Inicia o agendador para capturar automaticamente a cada 60 segundos.
+- **POST `/order-books/capture/start`**  
+  Inicia o agendador para capturar automaticamente o order book a cada 60 segundos.
 
-### 🔹 `/order-book/capture/stop`  
-Interrompe o agendador.
+- **POST `/order-books/capture/stop`**  
+  Interrompe o agendador de captura.
 
-### 🔹 `/heatmap`  
-Renderiza no navegador um heatmap interativo com base nos arquivos `data/bids/BTC.csv` e `data/asks/BTC.csv`.
+- **GET `/order-books/capture/status`**  
+  Retorna o status do agendador.
+
+- **GET `/order-books/heatmap?symbol=BTCUSDT`**  
+  Renderiza um heatmap interativo dos dados de bids/asks do símbolo.
+
+- **GET `/candlesticks/`**  
+  Endpoints para candles (exemplo: OHLCV de ativos).
+
+- **GET `/learnings/`**  
+  Endpoints para uso futuro relacionados a aprendizado.
+
+Acesse a documentação interativa em `/docs` para explorar todas as rotas.
 
 ---
 
 ## 📈 Exemplo de visualização
 
-O heatmap gerado compara os volumes de ordens de compra (`bids`) e venda (`asks`) por preço, usando um mapa de calor baseado em Plotly.js:
+O heatmap gerado compara os volumes de ordens de compra (`bids`) e venda (`asks`) por preço ao longo do tempo.
 
-> Para gerar um heatmap válido, certifique-se de ter rodado o endpoint `/order-book/capture`.
+> Para gerar um heatmap válido, certifique-se de acionar o endpoint `/order-books/capture/start` e aguardar a captura de dados.
 
 ---
 
@@ -152,7 +175,7 @@ O heatmap gerado compara os volumes de ordens de compra (`bids`) e venda (`asks`
 
 ## 🧪 Testes
 
-Por enquanto, os testes são manuais. Para automatização, considere usar:
+No momento os testes são manuais. Para automação, recomenda-se:
 
 ```bash
 pip install pytest httpx
@@ -162,4 +185,4 @@ pip install pytest httpx
 
 ## 📄 Licença
 
-MIT © [Seu Nome ou Organização]
+MIT © [madrijkaard](https://github.com/madrijkaard)
