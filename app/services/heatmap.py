@@ -100,12 +100,12 @@ def _create_combined_heatmap(bids_df: pd.DataFrame, asks_df: pd.DataFrame, avg_p
             x=time_labels,
             y=price_labels,
             colorscale=[
-                [0.0, "#3F0653"],
-                [0.2, "#2E138F"],
-                [0.4, "#0c0ccb"],
-                [0.6, "#3861f3"],
-                [0.8, "#6a8df4"],
-                [1.0, "#d7fb0b"]
+                [0.0, "#520D6B"],
+                [0.2, "#3111A4"],
+                [0.4, "#1717d8"],
+                [0.6, "#0d49ff"],
+                [0.8, "#d7f209"],
+                [1.0, "#d4ca0c"]
             ],
             zmin=0,
             zmax=1,
