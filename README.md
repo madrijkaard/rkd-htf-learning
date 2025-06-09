@@ -103,7 +103,7 @@ Acesse em: [http://localhost:8000](http://localhost:8000)
 ### 1. Construa a imagem Docker
 
 ```bash
-docker build -t rkd-htf-learning .
+docker build --no-cache -t rkd-htf-learning .
 ```
 
 ### 2. Execute em background
