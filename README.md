@@ -121,11 +121,12 @@ POST http://localhost:8000/order-books/capture/start
 
 - Documentação OpenAPI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### 🛑 Parar e remover o container
+### 🛑 Parar, remover o container e a imagem
 
 ```bash
 docker stop rkd-container
 docker rm rkd-container
+docker rmi rkd-container
 ```
 
 ---
