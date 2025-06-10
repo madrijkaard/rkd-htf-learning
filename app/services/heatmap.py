@@ -126,7 +126,7 @@ def _create_combined_heatmap(bids_df: pd.DataFrame, asks_df: pd.DataFrame, avg_p
             xaxis_title="Tempo (Horário Local)",
             yaxis_title="Faixa de Preço",
             height=500,
-            margin=dict(t=40, b=50, l=60, r=60),
+            margin=dict(t=40, b=50, l=0, r=60),
             plot_bgcolor="white",
             paper_bgcolor="white",
             font=dict(color="black")
