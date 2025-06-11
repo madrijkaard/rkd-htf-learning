@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.schedules import order_book as order_book_schedule
 from app.services.heatmap import generate_heatmap_data
-from app.services.histogram import generate_histograms  # ⬅️ Import do histograma
+from app.services.histogram import generate_histograms  # Importa o gerador de histogramas
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -48,18 +48,21 @@ async def render_heatmap(
     request: Request,
     symbol: str = Query(..., description="Símbolo da cripto (ex: BTCUSDT)"),
     bucket_price: float = Query(None, description="Intervalo de preços no eixo Y (ex: 100.0)"),
-    bucket_time: str = Query("5min", description="Intervalo de tempo no eixo X (ex: 10min, 30min, 1h)")
+    bucket_time: str = Query("5min", description="Intervalo de tempo no eixo X (ex: 5min, 30min, 1h)"),
+    side: str = Query(None, description="Filtrar por lado: 'ask', 'bid' ou deixar vazio para ambos")
 ):
     """
-    Renderiza o heatmap para o símbolo especificado, com controle de buckets de preço e tempo.
+    Renderiza o heatmap para o símbolo especificado,
+    com controle de buckets de preço, tempo e lado ('ask', 'bid' ou ambos).
     """
-    heatmap_data = generate_heatmap_data(symbol, bucket_price, bucket_time)
+    heatmap_data = generate_heatmap_data(symbol, bucket_price, bucket_time, side)
     return templates.TemplateResponse("heatmap.html", {
         "request": request,
         "heatmap_data": heatmap_data,
         "symbol": symbol,
         "bucket_price": bucket_price,
-        "bucket_time": bucket_time
+        "bucket_time": bucket_time,
+        "side": side or "ask + bid"
     })
 
 
@@ -68,20 +71,25 @@ async def render_histogram(
     request: Request,
     symbol: str = Query(..., description="Símbolo da cripto (ex: BTC)"),
     top: int = Query(None, description="Número de maiores barras a exibir (ex: 10)"),
-    minutes: int = Query(60, description="Intervalo de tempo em minutos (use 0 para considerar todos os dados)")
+    minutes: int = Query(60, description="Intervalo de tempo em minutos (0 = considera todos os dados)"),
+    bucket_size: float = Query(30.0, description="Tamanho fixo da faixa de preço (ex: 30.0 para buckets de 30 em 30)")
 ):
     """
     Gera dois histogramas de liquidez (asks e bids) com base no intervalo de tempo fornecido.
-    Exibe apenas as maiores barras se o parâmetro 'top' for fornecido.
-    Se minutes=0, considera todos os dados disponíveis.
+    Destaque em amarelo o bucket do preço de mercado mais recente.
     """
-    histogram_html = generate_histograms(symbol, top=top, minutes=minutes)
+    histogram_html = generate_histograms(
+        symbol=symbol,
+        top=top,
+        minutes=minutes,
+        bucket_size=bucket_size
+    )
     tempo_str = "todos os dados" if minutes == 0 else f"últimos {minutes} minutos"
 
     return templates.TemplateResponse("heatmap.html", {
         "request": request,
         "heatmap_data": histogram_html,
         "symbol": symbol,
-        "bucket_price": f"TOP {top}" if top else "automático",
+        "bucket_price": f"Buckets de {bucket_size:.0f}",
         "bucket_time": tempo_str
     })
